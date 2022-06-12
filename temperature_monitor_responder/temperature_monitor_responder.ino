@@ -12,8 +12,9 @@ int sensorValue1, sensorValue2, sensorValue3, sensorValue4, sensorValue5, sensor
 float voltage1, voltage2, voltage3, voltage4, voltage5, voltage6, voltage7;
 float temp1, temp2, temp3, temp4, temp5, temp6, temp7;
 
-float dataVoltage[] = {2.44, 2.42, 2.40, 2.38, 2.35, 2.32, 2.27, 2.23, 2.17, 2.11, 2.05, 1.99, 1.92, 1.86, 1.80, 1.74, 1.68, 1.63, 1.59, 1.55, 1.51, 1.48, 1.45, 1.43, 1.40, 1.38, 1.37, 1.35, 1.34, 1.33, 1.32, 1.31, 1.30};
-float dataTemperature[] = {-40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120};
+const uint8_t numdata = 33;
+float dataVoltage[numdata] = {2.44, 2.42, 2.40, 2.38, 2.35, 2.32, 2.27, 2.23, 2.17, 2.11, 2.05, 1.99, 1.92, 1.86, 1.80, 1.74, 1.68, 1.63, 1.59, 1.55, 1.51, 1.48, 1.45, 1.43, 1.40, 1.38, 1.37, 1.35, 1.34, 1.33, 1.32, 1.31, 1.30};
+float dataTemperature[numdata] = {-40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120};
 
 char sendTemp[10]={};
 
@@ -44,33 +45,38 @@ void loop()
 
   sensorValue1 = analogRead(A0);
   voltage1 = printVoltage(sensorValue1, 1);
-  // temp1 = printTemp(voltage1, 1);
+  temp1 = printTemp(voltage1, 1);
+  Serial.println();
   
   sensorValue2 = analogRead(A1);
   voltage2 = printVoltage(sensorValue2, 2);
-  // temp2 = printTemp(voltage2, 2);
-  
+  temp2 = printTemp(voltage2, 2);
+  Serial.println();
+    
   sensorValue3 = analogRead(A2);
   voltage3 = printVoltage(sensorValue3, 3);
-  // temp3 = printTemp(voltage3, 3);
-
+  temp3 = printTemp(voltage3, 3);
+  Serial.println();
+  
   sensorValue4 = analogRead(A3);
   voltage4 = printVoltage(sensorValue4, 4);
-  // temp4 = printTemp(voltage4, 4);
+  temp4 = printTemp(voltage4, 4);
+  Serial.println();
   
   sensorValue5 = analogRead(A4);
   voltage5 = printVoltage(sensorValue5, 5);
-  // temp5 = printTemp(voltage5, 5);
+  temp5 = printTemp(voltage5, 5);
+  Serial.println();
 
   sensorValue6 = analogRead(A5);
   voltage6 = printVoltage(sensorValue6, 6);
-  // temp6 = printTemp(voltage6, 6);
-
-    sensorValue7 = analogRead(A6);
+  temp6 = printTemp(voltage6, 6);
+  Serial.println();
+  
+  sensorValue7 = analogRead(A6);
   voltage7 = printVoltage(sensorValue7, 7);
-  // temp7 = printTemp(voltage7, 7);
-
-  Serial.println("");
+  temp7 = printTemp(voltage7, 7);
+  Serial.println();
 
   if (temp7 >= temp6 && temp7 >= temp5 && temp7 >= temp4 && temp7 >= temp3 && temp7 >= temp2 && temp7 >= temp1){
   	dtostrf(temp7, 7, 4, sendTemp);
@@ -220,7 +226,7 @@ void requestEvent()
 }
 
 float printVoltage(int sensor, int sensorNumb){
-	float voltage = sensor;// * (battery / 1024.0);
+	float voltage = sensor *5.2f / 1024.0;
   Serial.print("VA");
   Serial.print(sensorNumb);
   Serial.print(": ");
@@ -232,17 +238,10 @@ float printTemp(float voltage, int sensorNumb){
   float temp;
   if (1.30 < voltage && voltage < 2.44)
   {
-  	for (int x = 0; x <= 32; x++)
-  	{
-      if (dataVoltage[x] >= voltage && voltage >= dataVoltage[x+1])
-      {
-        temp = dataTemperature[x+1] + (voltage - dataVoltage[x+1]) * (dataTemperature[x] - dataTemperature[x+1]) / (dataVoltage[x] - dataVoltage[x+1]);
-        Serial.print("TA");
-  		  Serial.print(sensorNumb);
-   	  	Serial.print(": ");
-       	Serial.print(temp);
-      }
-  	}
+  	Serial.print("TA");
+    Serial.print(sensorNumb);
+    Serial.print(": ");
+    Serial.print(v_to_t(voltage));
   }
   else
   {
@@ -251,4 +250,14 @@ float printTemp(float voltage, int sensorNumb){
     Serial.print(": ERROR!");
   }
   return temp;
+}
+
+float v_to_t(float voltage){
+  for(int i = 0; i < numdata-1; i++) {
+    if(voltage > dataVoltage[i]){
+      return (voltage - dataVoltage[i])/(dataVoltage[i+1]-dataVoltage[i])*(dataTemperature[i+1]-dataTemperature[i])+dataTemperature[i];
+    }
+  }
+  return dataTemperature[numdata-1];
+
 }
